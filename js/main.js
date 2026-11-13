@@ -10,6 +10,7 @@
   };
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { Game.escape(); return; }
+    if (e.key === 'm' || e.key === 'M') { toggleSound(); return; }
     const dir = KEYMAP[e.key];
     if (!dir) return;
     e.preventDefault();
@@ -26,6 +27,13 @@
       Game.act(btn.dataset.dir);
     });
   });
+
+  // Sound toggle (or press M)
+  const soundBtn = document.getElementById('btn-sound');
+  const renderSound = () => { soundBtn.textContent = Sound.muted ? '🔇' : '🔊'; };
+  function toggleSound() { Sound.toggle(); renderSound(); }
+  soundBtn.addEventListener('click', toggleSound);
+  renderSound();
 
   document.getElementById('btn-shop').addEventListener('click', Game.showShop);
   document.getElementById('btn-exit').addEventListener('click', Game.showExit);

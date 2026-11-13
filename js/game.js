@@ -101,6 +101,8 @@ const Game = (() => {
     toastTimer = setTimeout(() => els.toast.classList.remove('show'), 1600);
   }
 
+  function blocked(msg) { toast(msg); Sound.play('bump'); }
+
   /* ---------------- Actions ---------------- */
   function canAct() { return state && !state.over && !modalType; }
 
@@ -111,8 +113,9 @@ const Game = (() => {
     if (dir === 'left' || dir === 'right') {
       const nc = c + (dir === 'left' ? -1 : 1);
       els.player.classList.toggle('face-left', dir === 'left');
-      if (nc < 0 || nc >= COLS) { toast('Solid rock wall ahead'); return; }
+      if (nc < 0 || nc >= COLS) { blocked('Solid rock wall ahead'); return; }
       if (state.grid[r][nc].type === 'empty') {
+        Sound.play('step');
         state.c = nc;
         fall();
       } else if (dig(r, nc) === 'cleared') {
@@ -121,12 +124,12 @@ const Game = (() => {
         fall();
       }
     } else if (dir === 'down') {
-      if (r + 1 >= ROWS) { toast('You reached the bottom of the mine!'); return; }
+      if (r + 1 >= ROWS) { blocked('You reached the bottom of the mine!'); return; }
       if (state.grid[r + 1][c].type === 'empty') fall();
       else if (dig(r + 1, c) === 'cleared') fall();
     } else if (dir === 'up') {
-      if (r - 1 < 0) { toast('That\'s the surface above'); return; }
-      if (state.grid[r - 1][c].type === 'empty') { toast('You can\'t jump!'); return; }
+      if (r - 1 < 0) { blocked('That\'s the surface above'); return; }
+      if (state.grid[r - 1][c].type === 'empty') { blocked('You can\'t jump!'); return; }
       dig(r - 1, c);
     }
 
@@ -137,7 +140,9 @@ const Game = (() => {
 
   // Fall while the cell below is empty
   function fall() {
+    const start = state.r;
     while (state.r + 1 < ROWS && state.grid[state.r + 1][state.c].type === 'empty') state.r++;
+    if (state.r > start) Sound.play('fall');
   }
 
   // Dig: returns 'cleared' / 'partial' / null
@@ -153,12 +158,13 @@ const Game = (() => {
 
     if (cell.type === 'yellow') {
       cell.hp--;
-      if (cell.hp > 0) { paintCell(r, c); return 'partial'; }
+      if (cell.hp > 0) { paintCell(r, c); Sound.play('crack'); return 'partial'; }
     }
 
     if (cell.type === 'bomb') {
       state.hearts--;
       state.stats.bomb++;
+      Sound.play('boom');
       floatText(r, c, '💥', null, true);
       els.player.classList.remove('hurt');
       void els.player.offsetWidth;
@@ -168,6 +174,8 @@ const Game = (() => {
       const value = CONFIG.VALUE[cell.type] || 0;
       state.coins += value;
       state.stats[cell.type]++;
+      Sound.play('dig');
+      Sound.play({ blue: 'coin', yellow: 'coin3', purple: 'gem' }[cell.type]);
       const color = { blue: '#bfe0ff', yellow: '#ffe066', purple: '#e8b8ff' }[cell.type];
       floatText(r, c, '+' + value, color);
       if (cell.type === 'purple') toast('💎 Purple gem found! +10 coins');
@@ -212,6 +220,7 @@ const Game = (() => {
         if (state.coins < p.price) return;
         state.coins -= p.price;
         state.hearts += p.hearts;
+        Sound.play('buy');
         updateHUD();
         toast(`Purchased: +${p.hearts} heart${p.hearts > 1 ? 's' : ''}`);
         onBought();
@@ -239,6 +248,7 @@ const Game = (() => {
 
   // Out of hearts
   function showDeath() {
+    Sound.play('lose');
     const box = openModal('death', `
       <h2>💔 Out of Hearts</h2>
       <p>You have 🪙 <b>${state.coins}</b> coins.<br>Buy hearts to keep mining, or end the game?</p>
@@ -252,6 +262,7 @@ const Game = (() => {
   // Quiz
   function showQuiz() {
     const q = QuestionBank.next();
+    if (modalType !== 'quiz' && state.shovels <= 0) Sound.play('empty');
     const box = openModal('quiz', `
       <h2>📝 Quiz for Shovels</h2>
       <p>${state.shovels <= 0 ? 'Out of shovels! ' : ''}Answer correctly to earn <b>${CONFIG.QUIZ_REWARD}</b> shovels (now ⛏️ ${state.shovels})</p>
@@ -277,6 +288,7 @@ const Game = (() => {
       if (q.options[i].correct) {
         state.shovels += CONFIG.QUIZ_REWARD;
         state.stats.quizRight++;
+        Sound.play('correct');
         updateHUD();
         fb.className = 'feedback ok';
         fb.textContent = `Correct! +${CONFIG.QUIZ_REWARD} shovels, you now have ${state.shovels}.`;
@@ -287,6 +299,7 @@ const Game = (() => {
         actions.querySelector('#m-more').addEventListener('click', showQuiz);
       } else {
         optBtns[i].classList.add('wrong');
+        Sound.play('wrong');
         fb.className = 'feedback bad';
         fb.textContent = 'Wrong answer. Try another question!';
         actions.innerHTML = `<button class="btn" id="m-next">Next ➜</button>`;
@@ -311,6 +324,7 @@ const Game = (() => {
   }
 
   function gameOver(reason) {
+    if (modalType !== 'death') Sound.play('lose');
     state.over = true;
     const s = state.stats;
     const box = openModal('over', `
