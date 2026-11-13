@@ -7,6 +7,7 @@ const Game = (() => {
   let state = null;
   let modalType = null;
   let toastTimer = null;
+  const QUIZ_DELAY_MS = 500; // answers unlock 0.5s after a question appears
 
   /* ---------------- Init ---------------- */
   function init() {
@@ -275,10 +276,19 @@ const Game = (() => {
     const optBtns = box.querySelectorAll('.option');
     optBtns.forEach((btn, i) => {
       btn.textContent = `${'ABCD'[i]}. ${q.options[i].text}`;
+      btn.disabled = true; // 防误触 / prevent accidental taps
+      btn.classList.add('waiting');
+      btn.style.opacity = '0.45';
       btn.addEventListener('click', () => answer(i));
     });
+    const unlockTimer = setTimeout(() => {
+      if (!box.isConnected || box.querySelector('.option.correct')) return;
+      optBtns.forEach(b => { b.disabled = false; b.classList.remove('waiting'); b.style.opacity = ''; });
+    }, QUIZ_DELAY_MS);
 
     function answer(i) {
+      if (optBtns[i].classList.contains('waiting')) return;
+      clearTimeout(unlockTimer);
       optBtns.forEach((b, j) => {
         b.disabled = true;
         if (q.options[j].correct) b.classList.add('correct');
