@@ -70,6 +70,7 @@ body {
 .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #a86f1c; }
 .btn:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
 .btn-danger { background: linear-gradient(#ff9b8a, #e05a45); box-shadow: 0 3px 0 #8f2b1c; color: #fff; }
+.btn-icon { flex: none; width: 48px; }
 .btn-ghost { background: rgba(255, 255, 255, 0.15); color: #f6ecdf; box-shadow: none; }
 
 /* ---------- 矿山 ---------- */
