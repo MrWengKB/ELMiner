@@ -1,14 +1,14 @@
-// 游戏核心逻辑
+// Core game logic
 const Game = (() => {
   const { COLS, ROWS, VISIBLE_ROWS } = CONFIG;
   const $ = id => document.getElementById(id);
   let els = {};
-  let cells = [];   // DOM 格子
+  let cells = [];   // DOM cells
   let state = null;
   let modalType = null;
   let toastTimer = null;
 
-  /* ---------------- 初始化 ---------------- */
+  /* ---------------- Init ---------------- */
   function init() {
     els = {
       grid: $('grid'), player: $('player'), viewport: $('viewport'),
@@ -50,7 +50,7 @@ const Game = (() => {
     closeModal();
   }
 
-  /* ---------------- 渲染 ---------------- */
+  /* ---------------- Render ---------------- */
   function paintCell(r, c) {
     const cell = state.grid[r][c];
     let cls = cell.type;
@@ -101,7 +101,7 @@ const Game = (() => {
     toastTimer = setTimeout(() => els.toast.classList.remove('show'), 1600);
   }
 
-  /* ---------------- 操作 ---------------- */
+  /* ---------------- Actions ---------------- */
   function canAct() { return state && !state.over && !modalType; }
 
   function act(dir) {
@@ -111,20 +111,22 @@ const Game = (() => {
     if (dir === 'left' || dir === 'right') {
       const nc = c + (dir === 'left' ? -1 : 1);
       els.player.classList.toggle('face-left', dir === 'left');
-      if (nc < 0 || nc >= COLS) { toast('前面是坚硬的岩壁'); return; }
+      if (nc < 0 || nc >= COLS) { toast('Solid rock wall ahead'); return; }
       if (state.grid[r][nc].type === 'empty') {
         state.c = nc;
         fall();
-      } else {
-        dig(r, nc);
+      } else if (dig(r, nc) === 'cleared') {
+        // step into the cleared cell, then fall if nothing below
+        state.c = nc;
+        fall();
       }
     } else if (dir === 'down') {
-      if (r + 1 >= ROWS) { toast('已经到达矿山最底层！'); return; }
+      if (r + 1 >= ROWS) { toast('You reached the bottom of the mine!'); return; }
       if (state.grid[r + 1][c].type === 'empty') fall();
       else if (dig(r + 1, c) === 'cleared') fall();
     } else if (dir === 'up') {
-      if (r - 1 < 0) { toast('上面就是地面了'); return; }
-      if (state.grid[r - 1][c].type === 'empty') { toast('无法跳跃哦'); return; }
+      if (r - 1 < 0) { toast('That\'s the surface above'); return; }
+      if (state.grid[r - 1][c].type === 'empty') { toast('You can\'t jump!'); return; }
       dig(r - 1, c);
     }
 
@@ -133,12 +135,12 @@ const Game = (() => {
     afterAction();
   }
 
-  // 掉落：脚下为空就一直往下落
+  // Fall while the cell below is empty
   function fall() {
     while (state.r + 1 < ROWS && state.grid[state.r + 1][state.c].type === 'empty') state.r++;
   }
 
-  // 挖矿：返回 'cleared' / 'partial' / null
+  // Dig: returns 'cleared' / 'partial' / null
   function dig(r, c) {
     if (state.shovels <= 0) { showQuiz(); return null; }
     const cell = state.grid[r][c];
@@ -161,14 +163,14 @@ const Game = (() => {
       els.player.classList.remove('hurt');
       void els.player.offsetWidth;
       els.player.classList.add('hurt');
-      toast('💣 挖到炸弹！生命 -1');
+      toast('💣 Bomb! -1 heart');
     } else {
       const value = CONFIG.VALUE[cell.type] || 0;
       state.coins += value;
       state.stats[cell.type]++;
       const color = { blue: '#bfe0ff', yellow: '#ffe066', purple: '#e8b8ff' }[cell.type];
       floatText(r, c, '+' + value, color);
-      if (cell.type === 'purple') toast('💎 发现紫色宝石！+10 金币');
+      if (cell.type === 'purple') toast('💎 Purple gem found! +10 coins');
     }
     state.grid[r][c] = { type: 'empty', hp: 0 };
     paintCell(r, c);
@@ -181,7 +183,7 @@ const Game = (() => {
     else if (state.shovels <= 0) showQuiz();
   }
 
-  /* ---------------- 弹窗 ---------------- */
+  /* ---------------- Modals ---------------- */
   function openModal(type, html) {
     modalType = type;
     els.box.innerHTML = html;
@@ -211,13 +213,13 @@ const Game = (() => {
         state.coins -= p.price;
         state.hearts += p.hearts;
         updateHUD();
-        toast(`购买成功：生命 +${p.hearts}`);
+        toast(`Purchased: +${p.hearts} heart${p.hearts > 1 ? 's' : ''}`);
         onBought();
       });
     });
   }
 
-  // 小商店
+  // Shop
   function showShop() {
     if (!state || state.over || modalType) return;
     if (state.hearts <= 0) { showDeath(); return; }
@@ -226,33 +228,33 @@ const Game = (() => {
 
   function renderShop() {
     const box = openModal('shop', `
-      <h2>🛒 小商店</h2>
-      <p>当前金币：🪙 <b>${state.coins}</b> · 生命：❤️ <b>${state.hearts}</b></p>
+      <h2>🛒 Shop</h2>
+      <p>Coins: 🪙 <b>${state.coins}</b> · Hearts: ❤️ <b>${state.hearts}</b></p>
       ${packsHTML()}
-      <div class="modal-actions"><button class="btn btn-ghost" id="m-close">关闭</button></div>
+      <div class="modal-actions"><button class="btn btn-ghost" id="m-close">Close</button></div>
     `);
     bindPacks(box, renderShop);
     box.querySelector('#m-close').addEventListener('click', closeModal);
   }
 
-  // 生命归零
+  // Out of hearts
   function showDeath() {
     const box = openModal('death', `
-      <h2>💔 生命值归零</h2>
-      <p>你有 🪙 <b>${state.coins}</b> 金币。<br>购买生命值继续挖矿，还是结束游戏？</p>
+      <h2>💔 Out of Hearts</h2>
+      <p>You have 🪙 <b>${state.coins}</b> coins.<br>Buy hearts to keep mining, or end the game?</p>
       ${packsHTML()}
-      <div class="modal-actions"><button class="btn btn-danger" id="m-end">结束游戏</button></div>
+      <div class="modal-actions"><button class="btn btn-danger" id="m-end">End Game</button></div>
     `);
     bindPacks(box, () => { closeModal(); afterAction(); });
-    box.querySelector('#m-end').addEventListener('click', () => gameOver('生命值耗尽'));
+    box.querySelector('#m-end').addEventListener('click', () => gameOver('You ran out of hearts'));
   }
 
-  // 答题
+  // Quiz
   function showQuiz() {
     const q = QuestionBank.next();
     const box = openModal('quiz', `
-      <h2>📝 答题换矿铲</h2>
-      <p>${state.shovels <= 0 ? '矿铲用完了！' : ''}答对可获得 <b>${CONFIG.QUIZ_REWARD}</b> 把矿铲（当前 ⛏️ ${state.shovels}）</p>
+      <h2>📝 Quiz for Shovels</h2>
+      <p>${state.shovels <= 0 ? 'Out of shovels! ' : ''}Answer correctly to earn <b>${CONFIG.QUIZ_REWARD}</b> shovels (now ⛏️ ${state.shovels})</p>
       <p class="question"></p>
       <div class="options">${q.options.map((_, i) => `<button class="option" data-i="${i}"></button>`).join('')}</div>
       <p class="feedback"></p>
@@ -277,57 +279,57 @@ const Game = (() => {
         state.stats.quizRight++;
         updateHUD();
         fb.className = 'feedback ok';
-        fb.textContent = `回答正确！获得 ${CONFIG.QUIZ_REWARD} 把矿铲，现在共 ${state.shovels} 把。`;
+        fb.textContent = `Correct! +${CONFIG.QUIZ_REWARD} shovels, you now have ${state.shovels}.`;
         actions.innerHTML = `
-          <button class="btn" id="m-dig">⛏️ 继续挖矿</button>
-          <button class="btn btn-ghost" id="m-more">📝 继续答题</button>`;
+          <button class="btn" id="m-dig">⛏️ Keep Mining</button>
+          <button class="btn btn-ghost" id="m-more">📝 Another Question</button>`;
         actions.querySelector('#m-dig').addEventListener('click', closeModal);
         actions.querySelector('#m-more').addEventListener('click', showQuiz);
       } else {
         optBtns[i].classList.add('wrong');
         fb.className = 'feedback bad';
-        fb.textContent = '答错了，再试一道题吧！';
-        actions.innerHTML = `<button class="btn" id="m-next">下一题 ➜</button>`;
+        fb.textContent = 'Wrong answer. Try another question!';
+        actions.innerHTML = `<button class="btn" id="m-next">Next ➜</button>`;
         actions.querySelector('#m-next').addEventListener('click', showQuiz);
       }
     }
   }
 
-  // 退出
+  // Quit
   function showExit() {
     if (!state || state.over || modalType) return;
     const box = openModal('exit', `
-      <h2>🚪 退出游戏</h2>
-      <p>确定要结束本局吗？</p>
+      <h2>🚪 Quit Game</h2>
+      <p>Are you sure you want to end this game?</p>
       <div class="modal-actions">
-        <button class="btn btn-ghost" id="m-cancel">继续游戏</button>
-        <button class="btn btn-danger" id="m-quit">退出</button>
+        <button class="btn btn-ghost" id="m-cancel">Keep Playing</button>
+        <button class="btn btn-danger" id="m-quit">Quit</button>
       </div>
     `);
     box.querySelector('#m-cancel').addEventListener('click', closeModal);
-    box.querySelector('#m-quit').addEventListener('click', () => gameOver('你退出了游戏'));
+    box.querySelector('#m-quit').addEventListener('click', () => gameOver('You quit the game'));
   }
 
   function gameOver(reason) {
     state.over = true;
     const s = state.stats;
     const box = openModal('over', `
-      <h2>🏁 游戏结束</h2>
+      <h2>🏁 Game Over</h2>
       <p>${reason}</p>
       <div class="summary">
-        <div>🪙 金币<br><b>${state.coins}</b></div>
-        <div>⬇️ 深度<br><b>${state.r + 1} / ${ROWS}</b></div>
-        <div>🟦 蓝矿<br><b>${s.blue}</b></div>
-        <div>🟨 黄矿<br><b>${s.yellow}</b></div>
-        <div>💎 宝石<br><b>${s.purple}</b></div>
-        <div>💣 炸弹<br><b>${s.bomb}</b></div>
+        <div>🪙 Coins<br><b>${state.coins}</b></div>
+        <div>⬇️ Depth<br><b>${state.r + 1} / ${ROWS}</b></div>
+        <div>🟦 Blue<br><b>${s.blue}</b></div>
+        <div>🟨 Yellow<br><b>${s.yellow}</b></div>
+        <div>💎 Gems<br><b>${s.purple}</b></div>
+        <div>💣 Bombs<br><b>${s.bomb}</b></div>
       </div>
-      <div class="modal-actions"><button class="btn" id="m-restart">🔄 再来一局</button></div>
+      <div class="modal-actions"><button class="btn" id="m-restart">🔄 Play Again</button></div>
     `);
     box.querySelector('#m-restart').addEventListener('click', newGame);
   }
 
-  // Esc 可关闭商店 / 退出确认
+  // Esc closes the shop / quit dialog
   function escape() {
     if (modalType === 'shop' || modalType === 'exit') closeModal();
   }

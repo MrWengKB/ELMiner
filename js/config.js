@@ -1,20 +1,20 @@
-// 游戏参数（可在此调整）
+// Game settings (tweak here)
 const CONFIG = {
-  COLS: 9,            // 每排矿石数
-  ROWS: 30,           // 总排数
-  VISIBLE_ROWS: 5,    // 一屏可见排数
+  COLS: 9,            // ores per row
+  ROWS: 30,           // total rows
+  VISIBLE_ROWS: 5,    // rows visible on screen
 
   START_HEARTS: 6,
   START_SHOVELS: 10,
 
-  YELLOW_RATE: 0.10,  // 黄矿比例（可相连）
-  PURPLE_RATE: 0.03,  // 紫色宝石比例（互不相连）
-  BOMB_RATE: 0.05,    // 炸弹比例
+  YELLOW_RATE: 0.10,  // yellow ratio (can be connected)
+  PURPLE_RATE: 0.03,  // purple gem ratio (never adjacent)
+  BOMB_RATE: 0.05,    // bomb ratio
 
   VALUE: { blue: 1, yellow: 3, purple: 10 },
-  YELLOW_HP: 2,       // 黄矿需挖两次
+  YELLOW_HP: 2,       // yellow needs two hits
 
-  QUIZ_REWARD: 5,     // 答对奖励矿铲
+  QUIZ_REWARD: 5,     // shovels per correct answer
 
   SHOP: [
     { hearts: 1, price: 10 },
@@ -22,6 +22,6 @@ const CONFIG = {
     { hearts: 10, price: 85 },
   ],
 
-  REVEAL_BOMBS: true,  // true = 炸弹显示为 💣；false = 炸弹伪装成蓝色矿石
+  REVEAL_BOMBS: true,  // true = show bombs as 💣; false = disguise as blue ore
   PLAYER: '👷',
 };

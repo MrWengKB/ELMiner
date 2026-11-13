@@ -1,4 +1,4 @@
-// 矿山地图生成
+// Mine map generation
 const MapGen = (() => {
   const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
@@ -20,7 +20,7 @@ const MapGen = (() => {
     const isStart = (r, c) => r === 0 && c === startCol;
     const total = rows * cols;
 
-    // 1) 黄矿：以种子为中心长成小簇，可上下左右相连
+    // 1) Yellow: grow small clusters from seeds (4-way connected)
     const yellowTarget = Math.round(total * CONFIG.YELLOW_RATE);
     let yellow = 0;
     let guard = 0;
@@ -31,7 +31,7 @@ const MapGen = (() => {
       const cluster = [[r, c]];
       grid[r][c] = { type: 'yellow', hp: CONFIG.YELLOW_HP };
       yellow++;
-      const size = 1 + Math.floor(Math.random() * 4); // 每簇 1~4 个
+      const size = 1 + Math.floor(Math.random() * 4); // 1-4 per cluster
       while (cluster.length < size && yellow < yellowTarget) {
         const [br, bc] = cluster[Math.floor(Math.random() * cluster.length)];
         const options = DIRS.map(([dr, dc]) => [br + dr, bc + dc])
@@ -44,7 +44,7 @@ const MapGen = (() => {
       }
     }
 
-    // 剩余蓝色格子，随机顺序
+    // remaining blue cells, shuffled
     const blueCells = () => {
       const list = [];
       for (let r = 0; r < rows; r++)
@@ -53,7 +53,7 @@ const MapGen = (() => {
       return shuffle(list);
     };
 
-    // 2) 紫色宝石：互不相连
+    // 2) Purple gems: never adjacent
     const purpleTarget = Math.round(total * CONFIG.PURPLE_RATE);
     let purple = 0;
     for (const [r, c] of blueCells()) {
@@ -64,7 +64,7 @@ const MapGen = (() => {
       purple++;
     }
 
-    // 3) 炸弹：不放在起点周围，给玩家一个安全开局
+    // 3) Bombs: none next to the start for a safe opening
     const bombTarget = Math.round(total * CONFIG.BOMB_RATE);
     let bombs = 0;
     for (const [r, c] of blueCells()) {
@@ -74,7 +74,7 @@ const MapGen = (() => {
       bombs++;
     }
 
-    // 起点为空位
+    // start cell is empty
     grid[0][startCol] = { type: 'empty', hp: 0 };
     return grid;
   }
