@@ -35,6 +35,7 @@
   soundBtn.addEventListener('click', toggleSound);
   renderSound();
 
+  document.getElementById('btn-format').addEventListener('click', Game.showFormat);
   document.getElementById('btn-shop').addEventListener('click', Game.showShop);
   document.getElementById('btn-exit').addEventListener('click', Game.showExit);
 

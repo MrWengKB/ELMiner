@@ -1,4 +1,4 @@
-// Question bank. CSV format: question,choice1,choice2,choice3,choice4 (choice1 is correct)
+// Question bank. CSV format: Question,Answer,Distractor1,Distractor2,Distractor3
 const QuestionBank = (() => {
   const BUILTIN = [
     ['What is the capital of France?', 'Paris', 'London', 'Rome', 'Berlin'],

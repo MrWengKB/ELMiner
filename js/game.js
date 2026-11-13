@@ -333,6 +333,39 @@ const Game = (() => {
     box.querySelector('#m-quit').addEventListener('click', () => gameOver('You quit the game'));
   }
 
+  // Question bank format help + blank template download
+  function showFormat() {
+    if (!state || state.over || modalType) return;
+    const box = openModal('format', `
+      <h2>📋 Question Bank Format</h2>
+      <p class="left">A question bank is a CSV file with <b>one question per row</b> and 5 columns separated by commas <code>,</code>:</p>
+      <table class="fmt-table">
+        <tr><th>Column</th><th>Content</th></tr>
+        <tr><td><code>Question</code></td><td>The question text</td></tr><tr><td><code>Answer</code></td><td>The correct answer</td></tr><tr><td><code>Distractor1</code></td><td>A wrong option</td></tr><tr><td><code>Distractor2</code></td><td>A wrong option</td></tr><tr><td><code>Distractor3</code></td><td>A wrong option</td></tr>
+      </table>
+      <p class="left">Example:</p>
+      <pre class="fmt-example">Question,Answer,Distractor1,Distractor2,Distractor3<br>What is the capital of France?,Paris,London,Rome,Berlin<br>3 × 7 = ?,21,24,18,27</pre>
+      <ul class="fmt-tips"><li>The header row is optional and skipped automatically</li><li>The four options are shuffled during the game</li><li>If a cell contains a comma, wrap it in double quotes, e.g. <code>"1,2,3"</code></li><li>You can edit it in Excel / Google Sheets and save as CSV</li></ul>
+      <div class="modal-actions">
+        <button class="btn" id="m-template">⬇️ Download Blank Template</button>
+        <button class="btn btn-ghost" id="m-close">Close</button>
+      </div>
+    `);
+    box.querySelector('#m-template').addEventListener('click', () => {
+      // UTF-8 BOM lets Excel open non-ASCII text correctly
+      const blob = new Blob(['\uFEFF' + 'Question,Answer,Distractor1,Distractor2,Distractor3\r\n'], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'quiz-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast('Blank template downloaded');
+    });
+    box.querySelector('#m-close').addEventListener('click', closeModal);
+  }
+
   function gameOver(reason) {
     if (modalType !== 'death') Sound.play('lose');
     state.over = true;
@@ -355,8 +388,8 @@ const Game = (() => {
 
   // Esc closes the shop / quit dialog
   function escape() {
-    if (modalType === 'shop' || modalType === 'exit') closeModal();
+    if (['shop', 'exit', 'format'].includes(modalType)) closeModal();
   }
 
-  return { init, act, showShop, showExit, toast, escape, newGame };
+  return { init, act, showShop, showExit, showFormat, toast, escape, newGame };
 })();
