@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Mining Master</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+<body>
+  <div class="app">
+    <!-- Top: title + stats + buttons -->
+    <header class="topbar">
+      <h1 class="title">⛏️ Mining Master</h1>
+      <div class="stats">
+        <div class="stat" title="Hearts">❤️ <span id="hearts">6</span></div>
+        <div class="stat" title="Shovels">⛏️ <span id="shovels">10</span></div>
+        <div class="stat" title="Coins">🪙 <span id="coins">0</span></div>
+        <div class="stat" title="Depth">⬇️ <span id="depth">1</span>/30</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="btn-load">📂 Load Quiz</button>
+        <button class="btn" id="btn-shop">🛒 Shop</button>
+        <button class="btn btn-danger" id="btn-exit">🚪 Quit</button>
+        <input type="file" id="file-input" accept=".csv,text/csv" hidden />
+      </div>
+    </header>
+
+    <!-- Mine -->
+    <main class="mine">
+      <div class="surface"></div>
+      <div class="viewport" id="viewport">
+        <div class="grid" id="grid">
+          <div class="player" id="player"><span>👷</span></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Touch controls -->
+    <nav class="dpad">
+      <button class="dir" id="btn-up" data-dir="up" aria-label="Up">▲</button>
+      <button class="dir" id="btn-left" data-dir="left" aria-label="Left">◀</button>
+      <button class="dir" id="btn-down" data-dir="down" aria-label="Down">▼</button>
+      <button class="dir" id="btn-right" data-dir="right" aria-label="Right">▶</button>
+    </nav>
+    <p class="hint">Keys: WASD / Arrow keys · Yellow ore takes 2 hits · Watch out for bombs 💣!</p>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal hidden" id="modal">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js?v=3"></script>
+  <script src="js/map.js?v=3"></script>
+  <script src="js/quiz.js?v=3"></script>
+  <script src="js/game.js?v=3"></script>
+  <script src="js/main.js?v=3"></script>
+</body>
+</html>
