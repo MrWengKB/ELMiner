@@ -27,7 +27,7 @@ const Sound = (() => {
   }
 
   function tone(freq, dur, { type = 'sine', vol = 0.2, at = 0, to = null } = {}) {
-    const t = ctx.currentTime + at;
+    const t = ctx.currentTime + 0.01 + at;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = type;
@@ -40,7 +40,7 @@ const Sound = (() => {
   }
 
   function noise(dur, { vol = 0.3, at = 0, filter = 'lowpass', freq = 1000 } = {}) {
-    const t = ctx.currentTime + at;
+    const t = ctx.currentTime + 0.01 + at;
     const src = ctx.createBufferSource();
     src.buffer = noiseBuf;
     const f = ctx.createBiquadFilter();
@@ -74,18 +74,31 @@ const Sound = (() => {
 
   function play(name) {
     if (muted || !SFX[name] || !ensure()) return;
-    try { SFX[name](); } catch (e) {}
+    const run = () => { try { SFX[name](); } catch (e) {} };
+    // A freshly created context may still be suspended: wait until it runs (fixes silent first sound)
+    if (ctx.state === 'running') run();
+    else ctx.resume().then(run).catch(() => {});
   }
 
   function toggle() {
     muted = !muted;
     try { localStorage.setItem('mining-muted', muted ? '1' : '0'); } catch (e) {}
-    if (!muted) { ensure(); SFX.coin(); }
+    if (!muted) play('coin');
     return muted;
   }
 
   // Browsers only allow audio after a user gesture
-  ['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => { if (!muted) ensure(); }, { once: true }));
+  function unlock() {
+    if (muted || !ensure()) return;
+    // Play a silent buffer to wake the audio engine early (needed on iOS / Safari)
+    const src = ctx.createBufferSource();
+    src.buffer = ctx.createBuffer(1, 1, 22050);
+    src.connect(ctx.destination);
+    src.start(0);
+    if (ctx.state === 'running') UNLOCK_EVENTS.forEach(ev => window.removeEventListener(ev, unlock, true));
+  }
+  const UNLOCK_EVENTS = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'click', 'keydown'];
+  UNLOCK_EVENTS.forEach(ev => window.addEventListener(ev, unlock, true)); // capture phase: runs before the game handles the input
 
   return { play, toggle, get muted() { return muted; } };
 })();
