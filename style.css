@@ -70,6 +70,20 @@ body {
 .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #a86f1c; }
 .btn:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
 .btn-danger { background: linear-gradient(#ff9b8a, #e05a45); box-shadow: 0 3px 0 #8f2b1c; color: #fff; }
+.toolbar .btn { font-size: 14px; padding: 10px 4px; white-space: nowrap; min-width: 0; }
+/* 窄屏：工具栏分两行 / narrow screens: two-row toolbar */
+@media (max-width: 520px) {
+  .toolbar { display: grid; grid-template-columns: repeat(6, 1fr); }
+  .toolbar .btn { grid-column: span 2; width: auto; }
+  #btn-format, #btn-load { grid-column: span 3; }
+}
+.modal-box p.left { text-align: left; }
+.fmt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.fmt-table th, .fmt-table td { border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 8px; text-align: left; }
+.fmt-table th { background: rgba(255, 255, 255, 0.08); }
+.fmt-example { margin: 0; padding: 10px; background: rgba(0, 0, 0, 0.35); border-radius: 10px; font-size: 13px; white-space: pre-wrap; word-break: break-all; user-select: text; -webkit-user-select: text; }
+.fmt-tips { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; opacity: 0.85; }
+code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4px; }
 .btn-icon { flex: none; width: 48px; }
 .btn-ghost { background: rgba(255, 255, 255, 0.15); color: #f6ecdf; box-shadow: none; }
 
