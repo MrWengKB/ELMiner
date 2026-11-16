@@ -105,7 +105,7 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
   position: relative;
   overflow: hidden;
   height: calc(var(--visible) * var(--cell) + (var(--visible) - 1) * var(--gap) + 2 * var(--pad));
-  background: linear-gradient(#5a3e2b, #3a271b);
+  background: linear-gradient(#2e2119, #1a120c);
   border-radius: 0 0 16px 16px;
   box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.6);
 }
@@ -128,8 +128,8 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
   transition: background 0.15s, opacity 0.2s;
 }
 
-.cell.blue {
-  background: linear-gradient(145deg, #6cb8ff, #2a73d9);
+.cell.brown {
+  background: linear-gradient(145deg, #b58457, #7a4f2c);
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.3);
 }
 .cell.yellow {
@@ -172,6 +172,20 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
 .cell.bomb::after { content: "💣"; font-size: calc(var(--cell) * 0.55); }
 
 .cell.empty { background: rgba(0, 0, 0, 0.28); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.45); }
+
+/* 爆炸闪光 + 震屏 / explosion flash + screen shake */
+.cell.blast { animation: blast 0.45s ease-out; }
+@keyframes blast {
+  0% { background: #fff3b0; box-shadow: 0 0 18px #ffb347; transform: scale(1.1); }
+  60% { background: #ff8c2a; }
+}
+.viewport.shake { animation: shake 0.35s; }
+@keyframes shake {
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-3px, -1px); }
+  80% { transform: translate(2px, 1px); }
+}
 
 .cell.hit { animation: hit 0.2s ease; }
 @keyframes hit {

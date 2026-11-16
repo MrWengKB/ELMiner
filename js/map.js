@@ -14,7 +14,7 @@ const MapGen = (() => {
     const grid = [];
     for (let r = 0; r < rows; r++) {
       grid.push([]);
-      for (let c = 0; c < cols; c++) grid[r].push({ type: 'blue', hp: 1 });
+      for (let c = 0; c < cols; c++) grid[r].push({ type: 'brown', hp: 1 });
     }
     const inside = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols;
     const isStart = (r, c) => r === 0 && c === startCol;
@@ -27,7 +27,7 @@ const MapGen = (() => {
     while (yellow < yellowTarget && guard++ < 5000) {
       const r = Math.floor(Math.random() * rows);
       const c = Math.floor(Math.random() * cols);
-      if (isStart(r, c) || grid[r][c].type !== 'blue') continue;
+      if (isStart(r, c) || grid[r][c].type !== 'brown') continue;
       const cluster = [[r, c]];
       grid[r][c] = { type: 'yellow', hp: CONFIG.YELLOW_HP };
       yellow++;
@@ -35,7 +35,7 @@ const MapGen = (() => {
       while (cluster.length < size && yellow < yellowTarget) {
         const [br, bc] = cluster[Math.floor(Math.random() * cluster.length)];
         const options = DIRS.map(([dr, dc]) => [br + dr, bc + dc])
-          .filter(([nr, nc]) => inside(nr, nc) && !isStart(nr, nc) && grid[nr][nc].type === 'blue');
+          .filter(([nr, nc]) => inside(nr, nc) && !isStart(nr, nc) && grid[nr][nc].type === 'brown');
         if (!options.length) break;
         const [nr, nc] = options[Math.floor(Math.random() * options.length)];
         grid[nr][nc] = { type: 'yellow', hp: CONFIG.YELLOW_HP };
@@ -44,19 +44,19 @@ const MapGen = (() => {
       }
     }
 
-    // remaining blue cells, shuffled
-    const blueCells = () => {
+    // remaining brown cells, shuffled
+    const brownCells = () => {
       const list = [];
       for (let r = 0; r < rows; r++)
         for (let c = 0; c < cols; c++)
-          if (grid[r][c].type === 'blue' && !isStart(r, c)) list.push([r, c]);
+          if (grid[r][c].type === 'brown' && !isStart(r, c)) list.push([r, c]);
       return shuffle(list);
     };
 
     // 2) Purple gems: never adjacent
     const purpleTarget = Math.round(total * CONFIG.PURPLE_RATE);
     let purple = 0;
-    for (const [r, c] of blueCells()) {
+    for (const [r, c] of brownCells()) {
       if (purple >= purpleTarget) break;
       const touching = DIRS.some(([dr, dc]) => inside(r + dr, c + dc) && grid[r + dr][c + dc].type === 'purple');
       if (touching) continue;
@@ -67,11 +67,21 @@ const MapGen = (() => {
     // 3) Bombs: none next to the start for a safe opening
     const bombTarget = Math.round(total * CONFIG.BOMB_RATE);
     let bombs = 0;
-    for (const [r, c] of blueCells()) {
+    for (const [r, c] of brownCells()) {
       if (bombs >= bombTarget) break;
       if (r <= 1 && Math.abs(c - startCol) <= 1) continue;
       grid[r][c] = { type: 'bomb', hp: 1 };
       bombs++;
+    }
+
+    // 4) Random gaps: never right below the start, so the player does not drop at spawn
+    const gapTarget = Math.round(total * CONFIG.GAP_RATE);
+    let gaps = 0;
+    for (const [r, c] of brownCells()) {
+      if (gaps >= gapTarget) break;
+      if (r === 1 && c === startCol) continue;
+      grid[r][c] = { type: 'empty', hp: 0 };
+      gaps++;
     }
 
     // start cell is empty

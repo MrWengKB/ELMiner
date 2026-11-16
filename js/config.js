@@ -9,9 +9,10 @@ const CONFIG = {
 
   YELLOW_RATE: 0.10,  // yellow ratio (can be connected)
   PURPLE_RATE: 0.03,  // purple gem ratio (never adjacent)
-  BOMB_RATE: 0.05,    // bomb ratio
+  BOMB_RATE: 0.05,
+  GAP_RATE: 0.06,     // ratio of random empty gaps (no ore)    // bomb ratio
 
-  VALUE: { blue: 1, yellow: 3, purple: 10 },
+  VALUE: { brown: 1, yellow: 3, purple: 10 },
   YELLOW_HP: 2,       // yellow needs two hits
 
   QUIZ_REWARD: 5,     // shovels per correct answer
@@ -22,6 +23,6 @@ const CONFIG = {
     { hearts: 10, price: 85 },
   ],
 
-  REVEAL_BOMBS: true,  // true = show bombs as 💣; false = disguise as blue ore
+  REVEAL_BOMBS: true,  // true = show bombs as 💣; false = disguise as brown ore
   PLAYER: '👷',
 };

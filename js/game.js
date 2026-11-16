@@ -41,7 +41,7 @@ const Game = (() => {
       hearts: CONFIG.START_HEARTS,
       shovels: CONFIG.START_SHOVELS,
       coins: 0,
-      stats: { blue: 0, yellow: 0, purple: 0, bomb: 0, quizRight: 0 },
+      stats: { brown: 0, yellow: 0, purple: 0, bomb: 0, quizRight: 0 },
       over: false,
     };
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) paintCell(r, c);
@@ -56,7 +56,7 @@ const Game = (() => {
     const cell = state.grid[r][c];
     let cls = cell.type;
     if (cell.type === 'yellow' && cell.hp < CONFIG.YELLOW_HP) cls = 'orange';
-    if (cell.type === 'bomb' && !CONFIG.REVEAL_BOMBS) cls = 'blue';
+    if (cell.type === 'bomb' && !CONFIG.REVEAL_BOMBS) cls = 'brown';
     cells[r][c].className = 'cell ' + cls;
   }
 
@@ -119,7 +119,7 @@ const Game = (() => {
         Sound.play('step');
         state.c = nc;
         fall();
-      } else if (dig(r, nc) === 'cleared') {
+      } else if (['cleared', 'exploded'].includes(dig(r, nc))) {
         // step into the cleared cell, then fall if nothing below
         state.c = nc;
         fall();
@@ -127,11 +127,15 @@ const Game = (() => {
     } else if (dir === 'down') {
       if (r + 1 >= ROWS) { blocked('You reached the bottom of the mine!'); return; }
       if (state.grid[r + 1][c].type === 'empty') fall();
-      else if (dig(r + 1, c) === 'cleared') fall();
+      else if (['cleared', 'exploded'].includes(dig(r + 1, c))) fall();
     } else if (dir === 'up') {
       if (r - 1 < 0) { blocked('That\'s the surface above'); return; }
       if (state.grid[r - 1][c].type === 'empty') { blocked('You can\'t jump!'); return; }
-      dig(r - 1, c);
+      if (dig(r - 1, c) === 'exploded') {
+        // bomb above: move into its spot, then fall if nothing below
+        state.r = r - 1;
+        fall();
+      }
     }
 
     updatePlayer();
@@ -146,7 +150,7 @@ const Game = (() => {
     if (state.r > start) Sound.play('fall');
   }
 
-  // Dig: returns 'cleared' / 'partial' / null
+  // Dig: returns 'cleared' / 'partial' / 'exploded' / null
   function dig(r, c) {
     if (state.shovels <= 0) { showQuiz(); return null; }
     const cell = state.grid[r][c];
@@ -170,20 +174,45 @@ const Game = (() => {
       els.player.classList.remove('hurt');
       void els.player.offsetWidth;
       els.player.classList.add('hurt');
-      toast('💣 Bomb! -1 heart');
+      toast('💣 Boom! Nearby ores destroyed, -1 heart');
+      state.grid[r][c] = { type: 'empty', hp: 0 };
+      paintCell(r, c);
+      explode(r, c);
+      return 'exploded';
     } else {
       const value = CONFIG.VALUE[cell.type] || 0;
       state.coins += value;
       state.stats[cell.type]++;
       Sound.play('dig');
-      Sound.play({ blue: 'coin', yellow: 'coin3', purple: 'gem' }[cell.type]);
-      const color = { blue: '#bfe0ff', yellow: '#ffe066', purple: '#e8b8ff' }[cell.type];
+      Sound.play({ brown: 'coin', yellow: 'coin3', purple: 'gem' }[cell.type]);
+      const color = { brown: '#f0d2ad', yellow: '#ffe066', purple: '#e8b8ff' }[cell.type];
       floatText(r, c, '+' + value, color);
       if (cell.type === 'purple') toast('💎 Purple gem found! +10 coins');
     }
     state.grid[r][c] = { type: 'empty', hp: 0 };
     paintCell(r, c);
     return 'cleared';
+  }
+
+  // Explosion: clear ores in the 8 surrounding cells (no coins; nearby bombs are cleared without chaining)
+  function explode(r, c) {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        const nr = r + dr, nc = c + dc;
+        if ((!dr && !dc) || nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+        const el = cells[nr][nc];
+        el.classList.remove('blast');
+        void el.offsetWidth;
+        el.classList.add('blast');
+        if (state.grid[nr][nc].type === 'empty') continue;
+        state.grid[nr][nc] = { type: 'empty', hp: 0 };
+        paintCell(nr, nc);
+        el.classList.add('blast');
+      }
+    }
+    els.viewport.classList.remove('shake');
+    void els.viewport.offsetWidth;
+    els.viewport.classList.add('shake');
   }
 
   function afterAction() {
@@ -376,7 +405,7 @@ const Game = (() => {
       <div class="summary">
         <div>🪙 Coins<br><b>${state.coins}</b></div>
         <div>⬇️ Depth<br><b>${state.r + 1} / ${ROWS}</b></div>
-        <div>🟦 Blue<br><b>${s.blue}</b></div>
+        <div>🟫 Brown<br><b>${s.brown}</b></div>
         <div>🟨 Yellow<br><b>${s.yellow}</b></div>
         <div>💎 Gems<br><b>${s.purple}</b></div>
         <div>💣 Bombs<br><b>${s.bomb}</b></div>
