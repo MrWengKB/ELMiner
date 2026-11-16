@@ -1,8 +1,9 @@
 // Game settings (tweak here)
 const CONFIG = {
-  COLS: 9,            // ores per row
-  ROWS: 30,           // total rows
-  VISIBLE_ROWS: 5,    // rows visible on screen
+  COLS: 11,            // ores per row
+  ROWS: 50,           // total rows
+  VISIBLE_ROWS: 5,
+  START_COL: 0,       // start column (0 = first cell of the first row)    // rows visible on screen
 
   START_HEARTS: 6,
   START_SHOVELS: 10,

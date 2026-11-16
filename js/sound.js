@@ -69,6 +69,7 @@ const Sound = (() => {
     correct: () => notes([523, 659, 784, 1047], 0.08, { type: 'triangle', vol: 0.2, dur: 0.2 }),
     wrong: () => { tone(200, 0.15, { type: 'sawtooth', vol: 0.12 }); tone(150, 0.3, { type: 'sawtooth', vol: 0.12, at: 0.16 }); },
     buy:   () => { tone(1319, 0.08, { type: 'square', vol: 0.08 }); tone(1760, 0.2, { type: 'square', vol: 0.08, at: 0.08 }); },
+    win:   () => { notes([523, 659, 784, 1047], 0.1, { type: 'triangle', vol: 0.2, dur: 0.18 }); [1047, 1319, 1568].forEach(f => tone(f, 0.7, { type: 'triangle', vol: 0.12, at: 0.45 })); },
     lose:  () => notes([392, 330, 262, 196], 0.18, { type: 'triangle', vol: 0.2, dur: 0.3 }),
   };
 

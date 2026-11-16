@@ -1,9 +1,9 @@
 :root {
-  --cols: 9;
+  --cols: 11;
   --visible: 5;
-  --gap: 6px;
+  --gap: 5px;
   --pad: 8px;
-  --cell: min(54px, calc((100vw - 24px - 2 * var(--pad) - 8 * var(--gap)) / 9));
+  --cell: min(54px, calc((min(100vw, 560px) - 24px - 2 * var(--pad) - (var(--cols) - 1) * var(--gap)) / var(--cols)));
   --step: calc(var(--cell) + var(--gap));
 }
 
@@ -206,7 +206,7 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
   line-height: 1;
   z-index: 5;
   pointer-events: none;
-  transform: translate(calc(var(--pc, 4) * var(--step)), calc(var(--pr, 0) * var(--step)));
+  transform: translate(calc(var(--pc, 0) * var(--step)), calc(var(--pr, 0) * var(--step)));
   transition: transform 0.18s ease;
 }
 .player span { display: inline-block; transition: transform 0.15s; }
@@ -339,6 +339,8 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
   pointer-events: none;
   transition: opacity 0.2s, transform 0.2s;
   z-index: 60;
-  white-space: nowrap;
+  max-width: 92vw;
+  text-align: center;
+  border-radius: 18px;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }

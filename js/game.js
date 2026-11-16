@@ -19,6 +19,7 @@ const Game = (() => {
     els.player.querySelector('span').textContent = CONFIG.PLAYER;
     document.documentElement.style.setProperty('--cols', COLS);
     document.documentElement.style.setProperty('--visible', VISIBLE_ROWS);
+    document.getElementById('rows').textContent = ROWS;
 
     const frag = document.createDocumentFragment();
     for (let r = 0; r < ROWS; r++) {
@@ -34,7 +35,7 @@ const Game = (() => {
   }
 
   function newGame() {
-    const startCol = Math.floor(COLS / 2);
+    const startCol = CONFIG.START_COL;
     state = {
       grid: MapGen.generate(ROWS, COLS, startCol),
       r: 0, c: startCol,
@@ -105,7 +106,7 @@ const Game = (() => {
   function blocked(msg) { toast(msg); Sound.play('bump'); }
 
   /* ---------------- Actions ---------------- */
-  function canAct() { return state && !state.over && !modalType; }
+  function canAct() { return state && !state.over && !state.busy && !modalType; }
 
   function act(dir) {
     if (!canAct()) return;
@@ -138,8 +139,22 @@ const Game = (() => {
       }
     }
 
-    updatePlayer();
     updateHUD();
+    // During a chain blast, move the player after the last wave (input paused meanwhile)
+    const delay = state.blastDelay || 0;
+    state.blastDelay = 0;
+    if (delay) {
+      const game = state;
+      state.busy = true;
+      setTimeout(() => {
+        if (state !== game) return;
+        state.busy = false;
+        updatePlayer();
+        afterAction();
+      }, delay);
+      return;
+    }
+    updatePlayer();
     afterAction();
   }
 
@@ -174,10 +189,10 @@ const Game = (() => {
       els.player.classList.remove('hurt');
       void els.player.offsetWidth;
       els.player.classList.add('hurt');
-      toast('💣 Boom! Nearby ores destroyed, -1 heart');
       state.grid[r][c] = { type: 'empty', hp: 0 };
       paintCell(r, c);
-      explode(r, c);
+      const res = explode(r, c);
+      toast(`💣 Boom! -1 heart · ${res.ores} ores blasted +${res.coins} coins` + (res.chain ? ` · ${res.chain} chain blast${res.chain > 1 ? 's' : ''}` : ''));
       return 'exploded';
     } else {
       const value = CONFIG.VALUE[cell.type] || 0;
@@ -194,30 +209,77 @@ const Game = (() => {
     return 'cleared';
   }
 
-  // Explosion: clear ores in the 8 surrounding cells (no coins; nearby bombs are cleared without chaining)
-  function explode(r, c) {
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        const nr = r + dr, nc = c + dc;
-        if ((!dr && !dc) || nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-        const el = cells[nr][nc];
-        el.classList.remove('blast');
-        void el.offsetWidth;
-        el.classList.add('blast');
-        if (state.grid[nr][nc].type === 'empty') continue;
-        state.grid[nr][nc] = { type: 'empty', hp: 0 };
-        paintCell(nr, nc);
-        el.classList.add('blast');
+  // Explosion: clear the 8 surrounding cells and earn their coins; nearby bombs chain-explode the same way (no extra hearts lost)
+  const BLAST_STEP_MS = 250;
+  const ORE_COLOR = { brown: '#f0d2ad', yellow: '#ffe066', purple: '#e8b8ff' };
+
+  function explode(r0, c0) {
+    const queue = [[r0, c0, 0]];
+    const game = state;
+    let coins = 0, ores = 0, chain = 0, maxDepth = 0;
+    const later = (depth, fn) => {
+      if (!depth) fn();
+      else setTimeout(() => { if (state === game) fn(); }, depth * BLAST_STEP_MS);
+    };
+
+    while (queue.length) {
+      const [r, c, depth] = queue.shift();
+      maxDepth = Math.max(maxDepth, depth);
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if ((!dr && !dc) || nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+          const cell = state.grid[nr][nc];
+          let label = null, color = null;
+          if (cell.type === 'bomb') {
+            chain++;
+            state.stats.bomb++;
+            queue.push([nr, nc, depth + 1]);
+          } else if (cell.type !== 'empty') {
+            const v = CONFIG.VALUE[cell.type] || 0;
+            coins += v;
+            ores++;
+            state.stats[cell.type]++;
+            label = '+' + v;
+            color = ORE_COLOR[cell.type];
+          }
+          // State updates at once; visuals play wave by wave along the chain
+          if (cell.type !== 'empty') state.grid[nr][nc] = { type: 'empty', hp: 0 };
+          later(depth, () => {
+            paintCell(nr, nc);
+            const el = cells[nr][nc];
+            el.classList.remove('blast');
+            void el.offsetWidth;
+            el.classList.add('blast');
+            if (label) floatText(nr, nc, label, color);
+          });
+        }
       }
+      later(depth, () => {
+        if (depth) { Sound.play('boom'); floatText(r, c, '💥', null, true); }
+        els.viewport.classList.remove('shake');
+        void els.viewport.offsetWidth;
+        els.viewport.classList.add('shake');
+      });
     }
-    els.viewport.classList.remove('shake');
-    void els.viewport.offsetWidth;
-    els.viewport.classList.add('shake');
+
+    state.coins += coins;
+    state.blastDelay = maxDepth * BLAST_STEP_MS;
+    if (ores) setTimeout(() => Sound.play('coin3'), 150);
+    return { coins, ores, chain };
+  }
+
+  // Complete: the player is on the bottom row and both the bottom row and the row above are cleared, so nothing is left to dig
+  function isComplete() {
+    if (state.r !== ROWS - 1) return false;
+    const clear = row => state.grid[row].every(cell => cell.type === 'empty');
+    return clear(ROWS - 1) && clear(ROWS - 2);
   }
 
   function afterAction() {
     if (state.over) return;
-    if (state.hearts <= 0) showDeath();
+    if (isComplete()) gameOver('You cleared the bottom of the mine. There is nothing left to dig!', true);
+    else if (state.hearts <= 0) showDeath();
     else if (state.shovels <= 0) showQuiz();
   }
 
@@ -395,12 +457,13 @@ const Game = (() => {
     box.querySelector('#m-close').addEventListener('click', closeModal);
   }
 
-  function gameOver(reason) {
-    if (modalType !== 'death') Sound.play('lose');
+  function gameOver(reason, win = false) {
+    if (win) Sound.play('win');
+    else if (modalType !== 'death') Sound.play('lose');
     state.over = true;
     const s = state.stats;
     const box = openModal('over', `
-      <h2>🏁 Game Over</h2>
+      <h2>${win ? '🎉 Mine Complete!' : '🏁 Game Over'}</h2>
       <p>${reason}</p>
       <div class="summary">
         <div>🪙 Coins<br><b>${state.coins}</b></div>
