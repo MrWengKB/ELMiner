@@ -457,6 +457,16 @@ const Game = (() => {
     box.querySelector('#m-close').addEventListener('click', closeModal);
   }
 
+  // Publish homework (no scores recorded)
+  function showPublish() {
+    if (!state || state.over || modalType) return;
+    const box = openModal('publish', '');
+    Homework.renderPublish(box, {
+      questions: QuestionBank.rows, source: QuestionBank.source,
+      isDefault: QuestionBank.isDefault, onClose: closeModal,
+    });
+  }
+
   function gameOver(reason, win = false) {
     if (win) Sound.play('win');
     else if (modalType !== 'death') Sound.play('lose');
@@ -480,8 +490,8 @@ const Game = (() => {
 
   // Esc closes the shop / quit dialog
   function escape() {
-    if (['shop', 'exit', 'format'].includes(modalType)) closeModal();
+    if (['shop', 'exit', 'format', 'publish'].includes(modalType)) closeModal();
   }
 
-  return { init, act, showShop, showExit, showFormat, toast, escape, newGame };
+  return { init, act, showShop, showExit, showFormat, showPublish, toast, escape, newGame };
 })();
