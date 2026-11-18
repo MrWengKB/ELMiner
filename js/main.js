@@ -9,6 +9,7 @@
     W: 'up', S: 'down', A: 'left', D: 'right',
   };
   document.addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input, textarea')) return; // typing in a text box, not playing
     if (e.key === 'Escape') { Game.escape(); return; }
     if (e.key === 'm' || e.key === 'M') { toggleSound(); return; }
     const dir = KEYMAP[e.key];
@@ -37,6 +38,7 @@
 
   document.getElementById('btn-format').addEventListener('click', Game.showFormat);
   document.getElementById('btn-shop').addEventListener('click', Game.showShop);
+  document.getElementById('btn-publish').addEventListener('click', Game.showPublish);
   document.getElementById('btn-exit').addEventListener('click', Game.showExit);
 
   // Load question bank
@@ -51,11 +53,27 @@
     Game.toast(n ? `✅ Loaded "${file.name}": ${n} questions` : '❌ No questions found. Please check the CSV format.');
   });
 
+  // Homework link: use the questions in the link (or the default set) and hide the
+  // load / format / publish buttons, so students can't change the questions
+  const hw = Homework.fromLocation();
+  const banner = document.getElementById('hw-banner');
+  const showBanner = () => { banner.textContent = `📘 Homework: ${hw.title} (${QuestionBank.count} questions)`; };
+  if (hw && !hw.error) {
+    document.body.classList.add('hw-mode');
+    document.title = `${hw.title} · ${document.title}`;
+    banner.hidden = false;
+    if (hw.questions) QuestionBank.setRows(hw.questions, hw.title);
+    showBanner();
+  } else if (hw && hw.error) {
+    Game.toast(hw.message);
+  }
+
   // When served over http, auto-load questions.csv; otherwise use the built-in bank
-  if (location.protocol.startsWith('http')) {
+  if (!(hw && hw.questions) && location.protocol.startsWith('http')) {
     fetch('questions.csv')
       .then(r => (r.ok ? r.arrayBuffer() : Promise.reject()))
       .then(buf => QuestionBank.load(QuestionBank.decode(buf), 'questions.csv'))
+      .then(() => { if (hw && !hw.error) showBanner(); })
       .catch(() => {});
   }
 })();

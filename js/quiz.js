@@ -19,7 +19,8 @@ const QuestionBank = (() => {
   ];
 
   let questions = BUILTIN.slice();
-  let source = 'built-in';
+  const BUILTIN_NAME = 'built-in';
+  let source = BUILTIN_NAME;
   let queue = [];
   let last = null;
 
@@ -53,6 +54,16 @@ const QuestionBank = (() => {
       result.push(r.slice(0, 5));
     }
     return result;
+  }
+
+  // Set the questions directly (used by homework links)
+  function setRows(rows, name) {
+    if (!rows.length) return 0;
+    questions = rows.map(r => r.slice(0, 5));
+    source = name;
+    queue = [];
+    last = null;
+    return questions.length;
   }
 
   function load(text, name) {
@@ -89,8 +100,11 @@ const QuestionBank = (() => {
   }
 
   return {
-    load, decode, next, parseCSV,
+    load, setRows, decode, next, parseCSV,
     get count() { return questions.length; },
+    get rows() { return questions.map(r => r.slice()); },
+    // Still the game's own question set (built-in or questions.csv), nothing imported
+    get isDefault() { return source === BUILTIN_NAME || source === 'questions.csv'; },
     get source() { return source; },
   };
 })();

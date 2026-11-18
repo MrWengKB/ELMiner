@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Mining Master</title>
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
   <div class="app">
     <!-- Top: title + stats + buttons -->
     <header class="topbar">
       <h1 class="title">⛏️ Mining Master</h1>
+      <p class="hw-banner" id="hw-banner" hidden></p>
       <div class="stats">
         <div class="stat" title="Hearts">❤️ <span id="hearts">6</span></div>
         <div class="stat" title="Shovels">⛏️ <span id="shovels">10</span></div>
@@ -20,6 +21,7 @@
       <div class="toolbar">
         <button class="btn" id="btn-format">📋 Format</button>
         <button class="btn" id="btn-load">📂 Load Quiz</button>
+        <button class="btn" id="btn-publish">📤 Homework</button>
         <button class="btn" id="btn-shop">🛒 Shop</button>
         <button class="btn btn-danger" id="btn-exit">🚪 Quit</button>
         <button class="btn btn-ghost btn-icon" id="btn-sound" title="Sound (M)">🔊</button>
@@ -55,9 +57,12 @@
 
   <script src="js/config.js?v=9"></script>
   <script src="js/map.js?v=9"></script>
-  <script src="js/quiz.js?v=9"></script>
+  <script src="js/quiz.js?v=10"></script>
   <script src="js/sound.js?v=9"></script>
-  <script src="js/game.js?v=9"></script>
-  <script src="js/main.js?v=9"></script>
+  <script src="js/vendor/qrcode.js?v=10"></script>
+  <script src="js/vendor/tiny-inflate.js?v=10"></script>
+  <script src="js/homework.js?v=10"></script>
+  <script src="js/game.js?v=10"></script>
+  <script src="js/main.js?v=10"></script>
 </body>
 </html>

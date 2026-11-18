@@ -71,12 +71,13 @@ body {
 .btn:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
 .btn-danger { background: linear-gradient(#ff9b8a, #e05a45); box-shadow: 0 3px 0 #8f2b1c; color: #fff; }
 .toolbar .btn { font-size: 14px; padding: 10px 4px; white-space: nowrap; min-width: 0; }
-/* 窄屏：工具栏分两行 / narrow screens: two-row toolbar */
-@media (max-width: 520px) {
-  .toolbar { display: grid; grid-template-columns: repeat(6, 1fr); }
-  .toolbar .btn { grid-column: span 2; width: auto; }
-  #btn-format, #btn-load { grid-column: span 3; }
-}
+/* Two-row toolbar (six buttons do not fit on one row in English) */
+.toolbar { display: grid; grid-template-columns: repeat(6, 1fr); }
+.toolbar .btn { grid-column: span 2; width: auto; }
+/* Homework mode: students can't change the questions or publish */
+.hw-mode #btn-format, .hw-mode #btn-load, .hw-mode #btn-publish { display: none; }
+.hw-banner { margin: 0; text-align: center; font-size: 14px; font-weight: 700; color: #ffd98a; }
+.hw-banner[hidden] { display: none; }
 .modal-box p.left { text-align: left; }
 .fmt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .fmt-table th, .fmt-table td { border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 8px; text-align: left; }
@@ -344,3 +345,22 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
   border-radius: 18px;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Publish homework ---------- */
+.modal-box .hw-text { text-align: left; font-size: 14px; }
+.hw-muted { opacity: 0.75; }
+.modal-box .hw-err { color: #ff8f84; font-weight: 700; }
+.modal-box .hw-err:empty { display: none; }
+.hw-field { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 700; }
+.hw-input {
+  font: inherit; font-weight: 400; font-size: 15px; width: 100%;
+  padding: 9px 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.3); color: #f6ecdf;
+  user-select: text; -webkit-user-select: text;
+}
+.hw-link { font-size: 12px; }
+.hw-result { display: flex; flex-direction: column; gap: 10px; }
+.hw-result[hidden], .hw-row[hidden] { display: none; }
+.hw-row { display: flex; gap: 8px; }
+.hw-btnlink { text-align: center; text-decoration: none; }
+.hw-qr { width: 240px; max-width: 100%; height: auto; align-self: center; border-radius: 10px; image-rendering: pixelated; }
