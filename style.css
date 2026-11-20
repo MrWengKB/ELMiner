@@ -309,7 +309,7 @@ code { background: rgba(255, 255, 255, 0.12); padding: 1px 5px; border-radius: 4
   cursor: pointer;
   font-family: inherit;
 }
-.option:hover:not(:disabled) { border-color: #f2b245; }
+@media (hover: hover) { .option:hover:not(:disabled) { border-color: #f2b245; } }
 .option:disabled { cursor: default; }
 .option.correct { background: rgba(80, 200, 100, 0.35); border-color: #5fd36f; }
 .option.wrong { background: rgba(230, 70, 60, 0.35); border-color: #ff6b5e; }
